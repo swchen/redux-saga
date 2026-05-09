@@ -6,7 +6,7 @@ const queue = []
   - Decrementing releases a lock. Zero locks puts the scheduler in a `released` state. This
     triggers flushing the queued tasks.
 **/
-let semaphore = 0
+export let semaphore = 0
 
 /**
   Puts the scheduler in a `suspended` state. Scheduled tasks will be queued until the
