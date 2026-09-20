@@ -1,5 +1,25 @@
 # @redux-saga/core
 
+## 1.5.1
+
+### Patch Changes
+
+- [#2768](https://github.com/redux-saga/redux-saga/pull/2768) [`a3ad450`](https://github.com/redux-saga/redux-saga/commit/a3ad45041278e0869d424cd197be0d8b39e6bfc3) Thanks [@yelouafi](https://github.com/yelouafi)! - Allow sagas typed with the public `Saga` alias to be composed with `yield*`, and remove stale legacy TypeScript metadata from the effects subpath.
+
+- Updated dependencies [[`a3ad450`](https://github.com/redux-saga/redux-saga/commit/a3ad45041278e0869d424cd197be0d8b39e6bfc3)]:
+  - @redux-saga/types@1.4.1
+
+## 1.5.0
+
+### Minor Changes
+
+- [#2741](https://github.com/redux-saga/redux-saga/pull/2741) [`36c5a0f`](https://github.com/redux-saga/redux-saga/commit/36c5a0fdca3bd484bdd070840af6b233fb64d314) Thanks [@yelouafi](https://github.com/yelouafi)! - Modernize TypeScript declaration support and allow sagas annotated with `SagaIterator` to be composed with `yield*`.
+
+### Patch Changes
+
+- Updated dependencies [[`36c5a0f`](https://github.com/redux-saga/redux-saga/commit/36c5a0fdca3bd484bdd070840af6b233fb64d314)]:
+  - @redux-saga/types@1.4.0
+
 ## 1.4.3
 
 ### Patch Changes
