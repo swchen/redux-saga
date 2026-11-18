@@ -1,82 +1,70 @@
-import test from 'tape'
+import { test, expect } from 'vitest'
 import { call, fork, put, select, take } from 'redux-saga/effects'
-import { fetchPosts, fetchPostsApi, invalidateReddit, nextRedditChange, startup } from '../src/sagas'
+import { fetchPosts, fetchPostsApi, invalidateTopic, nextTopicChange, startup } from '../src/sagas'
 import * as actions from '../src/actions'
-import { postsByRedditSelector, selectedRedditSelector } from '../src/reducers/selectors'
+import { postsByTopicSelector, selectedTopicSelector } from '../src/reducers/selectors'
 
-test('fetchPosts Saga', (t) => {
+test('fetchPosts Saga', () => {
   const mockPosts = [1, 2, 3]
-  const redditName = 'react_reddit'
-  const generator = fetchPosts(redditName)
-  t.deepEqual(generator.next().value, put(actions.requestPosts(redditName)), 'must dispatch a requestPosts action')
-  t.deepEqual(generator.next().value, call(fetchPostsApi, redditName), 'must call fetchPostsApi with reddit name')
-  t.deepEqual(
-    generator.next(mockPosts).value,
-    put(actions.receivePosts(redditName, mockPosts)),
-    'must dispatch a receivePosts action with posts',
+  const topicName = 'react_topic'
+  const generator = fetchPosts(topicName)
+  expect(generator.next().value, 'must dispatch a requestPosts action').toEqual(put(actions.requestPosts(topicName)))
+  expect(generator.next().value, 'must call fetchPostsApi with topic name').toEqual(call(fetchPostsApi, topicName))
+  expect(generator.next(mockPosts).value, 'must dispatch a receivePosts action with posts').toEqual(
+    put(actions.receivePosts(topicName, mockPosts)),
   )
-  t.ok(generator.next().done, 'must finish')
-  t.end()
+  expect(generator.next().done, 'must finish').toBe(true)
 })
 
-test('invalidateReddit Saga', (t) => {
-  const generator = invalidateReddit()
-  t.deepEqual(generator.next().value, take(actions.INVALIDATE_REDDIT), 'must take a SELECT_REDDIT action')
-  t.deepEqual(
-    generator.next({ reddit: 'new_reddit_1' }).value,
-    call(fetchPosts, 'new_reddit_1'),
-    'must call fetchPosts with new reddit',
+test('invalidateTopic Saga', () => {
+  const generator = invalidateTopic()
+  expect(generator.next().value, 'must take a SELECT_TOPIC action').toEqual(take(actions.INVALIDATE_TOPIC))
+  expect(generator.next({ topic: 'new_topic_1' }).value, 'must call fetchPosts with new topic').toEqual(
+    call(fetchPosts, 'new_topic_1'),
   )
-  t.deepEqual(generator.next().value, take(actions.INVALIDATE_REDDIT), 'must go back to beginning of loop')
-  t.end()
+  expect(generator.next().value, 'must go back to beginning of loop').toEqual(take(actions.INVALIDATE_TOPIC))
 })
 
-test('nextRedditChange Saga when switching to new reddit', (t) => {
-  const generator = nextRedditChange()
-  t.deepEqual(generator.next().value, select(selectedRedditSelector), 'must select current reddit from store')
-  t.deepEqual(generator.next('prev_reddit').value, take(actions.SELECT_REDDIT), 'must take a SELECT_REDDIT action')
-  t.deepEqual(generator.next().value, select(selectedRedditSelector), 'must select newly selected reddit from store')
-  t.deepEqual(
-    generator.next('new_reddit').value,
-    select(postsByRedditSelector),
-    'must select posts by reddit from store',
+test('nextTopicChange Saga when switching to new topic', () => {
+  const generator = nextTopicChange()
+  expect(generator.next().value, 'must select current topic from store').toEqual(select(selectedTopicSelector))
+  expect(generator.next('prev_topic').value, 'must take a SELECT_TOPIC action').toEqual(take(actions.SELECT_TOPIC))
+  expect(generator.next().value, 'must select newly selected topic from store').toEqual(select(selectedTopicSelector))
+  expect(generator.next('new_topic').value, 'must select posts by topic from store').toEqual(
+    select(postsByTopicSelector),
   )
-  t.deepEqual(generator.next({}).value, fork(fetchPosts, 'new_reddit'), "delegate to fetchPosts for new reddit's posts")
-  t.deepEqual(generator.next().value, select(selectedRedditSelector), 'must go back to beginning of loop')
-  t.end()
+  expect(generator.next({}).value, "delegate to fetchPosts for new topic's posts").toEqual(
+    fork(fetchPosts, 'new_topic'),
+  )
+  expect(generator.next().value, 'must go back to beginning of loop').toEqual(select(selectedTopicSelector))
 })
 
-test('nextRedditChange Saga when same reddit is selected', (t) => {
-  const generator = nextRedditChange()
+test('nextTopicChange Saga when same topic is selected', () => {
+  const generator = nextTopicChange()
   generator.next()
-  generator.next('prev_reddit')
+  generator.next('prev_topic')
   generator.next()
-  generator.next('prev_reddit')
-  t.deepEqual(generator.next().value, select(selectedRedditSelector), 'must go back to beginning of loop')
-  t.end()
+  generator.next('prev_topic')
+  expect(generator.next().value, 'must go back to beginning of loop').toEqual(select(selectedTopicSelector))
 })
 
-test('nextRedditChange Saga when posts were previously loaded', (t) => {
-  const generator = nextRedditChange()
+test('nextTopicChange Saga when posts were previously loaded', () => {
+  const generator = nextTopicChange()
   generator.next()
-  generator.next('prev_reddit')
+  generator.next('prev_topic')
   generator.next()
-  generator.next('new_reddit')
-  const postsByReddit = {
-    new_reddit: ['cached_post'],
+  generator.next('new_topic')
+  const postsByTopic = {
+    new_topic: ['cached_post'],
   }
-  t.deepEqual(generator.next(postsByReddit).value, select(selectedRedditSelector), 'must go back to beginning of loop')
-  t.end()
+  expect(generator.next(postsByTopic).value, 'must go back to beginning of loop').toEqual(select(selectedTopicSelector))
 })
 
-test('startup Saga', (t) => {
+test('startup Saga', () => {
   const generator = startup()
-  t.deepEqual(generator.next().value, select(selectedRedditSelector), 'gets currently selected reddit')
-  t.deepEqual(
-    generator.next('selected_reddit').value,
-    fork(fetchPosts, 'selected_reddit'),
-    'delegates to fetchPosts to get posts',
+  expect(generator.next().value, 'gets currently selected topic').toEqual(select(selectedTopicSelector))
+  expect(generator.next('selected_topic').value, 'delegates to fetchPosts to get posts').toEqual(
+    fork(fetchPosts, 'selected_topic'),
   )
-  t.ok(generator.next().done, 'must finish')
-  t.end()
+  expect(generator.next().done, 'must finish').toBe(true)
 })
